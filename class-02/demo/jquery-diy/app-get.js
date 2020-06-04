@@ -10,3 +10,4 @@ get('div').on('click', function(element) {
   element.css('background','green');
   console.log(element.css('background'));
 });
+console.log('seattle');
