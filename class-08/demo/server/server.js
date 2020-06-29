@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
 // Load Environment Variables from the .env file
-require('dotenv').config();
+require("dotenv").config();
 
 // Application Dependencies
-const express = require('express');
-const superagent = require('superagent');
-const cors = require('cors');
+const express = require("express");
+const superagent = require("superagent");
+const cors = require("cors");
 
 // Application Setup
 const PORT = process.env.PORT;
@@ -17,39 +17,38 @@ app.use(cors());
 const locations = {};
 
 // Route Definitions
-app.get('/location', locationHandler);
-app.get('/restaurants', restaurantHandler);
-app.get('/places', placesHandler);
-app.use('*', notFoundHandler);
+app.get("/location", locationHandler);
+app.get("/restaurants", restaurantHandler);
+app.get("/places", placesHandler);
+app.use("*", notFoundHandler);
 app.use(errorHandler);
-
+cd;
 
 function locationHandler(request, response) {
   const city = request.query.city;
-  const url = 'https://us1.locationiq.com/v1/search.php';
+  const url = "https://us1.locationiq.com/v1/search.php";
 
   // If we already got data for this city, don't fetch it again
   if (locations[city]) {
     response.send(locations[city]);
-  }
-  else {
-
+  } else {
     const queryParams = {
       key: process.env.GEOCODE_API_KEY,
       q: city,
-      format: 'json',
+      format: "json",
       limit: 1,
     };
-    superagent.get(url)
+    superagent
+      .get(url)
       .query(queryParams)
-      .then(data => {
+      .then((data) => {
         const geoData = data.body[0]; // first one ...
         const location = new Location(city, geoData);
         locations[city] = location; // Save it for next time
         response.send(location);
       })
       .catch(() => {
-        errorHandler('So sorry, something went wrong.', request, response);
+        errorHandler("So sorry, something went wrong.", request, response);
       });
   }
 }
@@ -61,32 +60,30 @@ function Location(city, geoData) {
   this.longitude = geoData.lon;
 }
 
-
 function restaurantHandler(request, response) {
-
-  const url = 'https://developers.zomato.com/api/v2.1/geocode';
+  const url = "https://developers.zomato.com/api/v2.1/geocode";
 
   const queryParams = {
     lat: request.query.latitude,
     lng: request.query.longitude,
   };
 
-  superagent.get(url)
-    .set('user-key', process.env.ZOMATO_API_KEY)
+  superagent
+    .get(url)
+    .set("user-key", process.env.ZOMATO_API_KEY)
     .query(queryParams)
     .then((data) => {
       const results = data.body;
       const restaurantData = [];
-      results.nearby_restaurants.forEach(entry => {
+      results.nearby_restaurants.forEach((entry) => {
         restaurantData.push(new Restaurant(entry));
       });
       response.send(restaurantData);
     })
     .catch((error) => {
       console.error(error);
-      errorHandler('So sorry, something went wrong.', request, response);
+      errorHandler("So sorry, something went wrong.", request, response);
     });
-
 }
 
 function Restaurant(entry) {
@@ -96,30 +93,30 @@ function Restaurant(entry) {
 }
 
 function placesHandler(request, response) {
-
   const lat = request.query.latitude;
   const lng = request.query.longitude;
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`;
 
   const queryParams = {
     access_token: process.env.MAPBOX_API_KEY,
-    types: 'poi',
+    types: "poi",
     limit: 10,
   };
 
-  superagent.get(url)
+  superagent
+    .get(url)
     .query(queryParams)
     .then((data) => {
       const results = data.body;
       const places = [];
-      results.features.forEach(entry => {
+      results.features.forEach((entry) => {
         places.push(new Place(entry));
       });
       response.send(places);
     })
     .catch((error) => {
       console.error(error);
-      errorHandler('So sorry, something went wrong.', request, response);
+      errorHandler("So sorry, something went wrong.", request, response);
     });
 }
 
@@ -129,15 +126,13 @@ function Place(data) {
   this.address = data.place_name;
 }
 
-
 function notFoundHandler(request, response) {
-  response.status(404).send('huh?');
+  response.status(404).send("huh?");
 }
 
 function errorHandler(error, request, response) {
   response.status(500).send(error);
 }
-
 
 // Make sure the server is listening for requests
 app.listen(PORT, () => console.log(`App is listening on ${PORT}`));
